@@ -1,0 +1,286 @@
+# %%
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+import warnings
+warnings.filterwarnings('ignore')
+
+from sklearn import tree
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+%matplotlib inline
+
+# %%
+data_ori = pd.read_csv('/Users/mac/Desktop/数据挖掘实验/bankloan.csv')
+
+# %%
+data_ori.head()
+
+# %%
+# 数据预处理
+t = data_ori.isnull().sum()
+print(t)
+
+# %%
+print(t[t>0])
+
+# %%
+# 无缺失值
+data_ori['A1'].value_counts()
+
+# %%
+data_ori['A1'].fillna('b',inplace=True) # 用众数填充
+
+# %%
+data_ori['A4'].value_counts()
+
+# %%
+data_ori['A4'].fillna('u',inplace=True) # 用众数填充
+
+# %%
+data_ori['A5'].value_counts()
+
+# %%
+data_ori['A5'].fillna('g',inplace=True) # 用众数填充
+
+# %%
+data_ori['A6'].value_counts()
+
+# %%
+data_ori['A6'].fillna('c',inplace=True) # 用众数填充
+
+# %%
+data_ori['A7'].value_counts()
+
+# %%
+data_ori['A7'].fillna('v',inplace=True) # 用众数填充
+
+# %%
+data_ori['A9'].value_counts()
+
+# %%
+data_ori['A9'].fillna('t',inplace=True) # 用众数填充
+
+# %%
+data_ori['A10'].value_counts()
+
+# %%
+data_ori['A10'].fillna('f',inplace=True) # 用众数填充
+
+# %%
+data_ori['A12'].value_counts()
+
+# %%
+data_ori['A12'].fillna('f',inplace=True) # 用众数填充
+
+# %%
+data_ori['A13'].value_counts()
+
+# %%
+data_ori['A13'].fillna('g',inplace=True) # 用众数填充
+
+# %%
+cols = ['A1','A4','A5','A6','A7','A9','A10','A12','A13']
+
+# %%
+for col in cols:
+    print( col,'->' ,data_ori[col].unique())
+
+# %%
+data_ori.shape
+
+# %%
+data_ori.head()
+
+# %%
+# 将数值进行数据化
+data_ori['A1'] = data_ori['A1'].map({'a':0,'b':1})
+data_ori['A4'] = data_ori['A4'].map({'u':0,'y':1,'l':2})
+data_ori['A5'] = data_ori['A5'].map({'g':0,'p':1,'gg':2})
+data_ori['A6'] = data_ori['A6'].map({'c':0,'d':1,'cc':2,'i':3,'j':4,'k':5,'m':6,'r':7,'q':8,'w':9,'x':10,'e':11,'aa':12,'ff':13})
+data_ori['A7'] = data_ori['A7'].map({'v':0,'h':1,'bb':2,'j':3,'n':4,'z':5,'dd':6,'ff':7,'o':8})
+data_ori['A9'] = data_ori['A9'].map({'t':0,'f':1})
+data_ori['A10'] = data_ori['A10'].map({'t':0,'f':1})
+data_ori['A12'] = data_ori['A12'].map({'t':0,'f':1})
+data_ori['A13'] = data_ori['A13'].map({'g':0,'p':1,'s':2})
+
+
+# %%
+data_ori.head()
+
+# %%
+# 查找其中是否还存在缺失值
+data_ori.isnull().sum()
+
+# %%
+target = 'A16'
+predictors = [col for col in data_ori.columns if col != target]
+predictors
+
+# %%
+# 交叉验证
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LogisticRegression
+
+# Initialize our algorithm
+
+alg = LogisticRegression(random_state=1) # 逻辑回归
+# Compute the accuracy score for all the cross validation folds.  (much simpler than what we did before!)
+scores_lr = cross_val_score(alg, data_ori[predictors], data_ori[target], cv=5)
+print (scores_lr)
+print (scores_lr.std())
+# Take the mean of the scores (because we have one for each fold)
+print(scores_lr.mean())
+
+# %%
+# 基于随机森林的分类
+clf = RandomForestClassifier(n_estimators=120, max_depth=3)
+scores_rf = cross_val_score(clf, data_ori[predictors], data_ori[target], cv=5)
+print (scores_rf)
+
+# %%
+tree_clf = tree.DecisionTreeClassifier(max_depth=4,criterion='entropy') # 基于决策树的分类
+scores_dt = cross_val_score(tree_clf, data_ori[predictors], data_ori[target], cv=5)
+print ('entropy')
+print (scores_dt)
+print('std= %f' % scores_dt.std())
+print (scores_dt.mean())
+
+print ('gini')
+tree_clf = tree.DecisionTreeClassifier(max_depth=4,criterion='gini')
+scores = cross_val_score(tree_clf, data_ori[predictors], data_ori[target], cv=5)
+print (scores)
+print (scores.std())
+print (scores.mean())
+
+# %%
+# 基于AdaBoost的分类
+clf = AdaBoostClassifier(n_estimators=120, algorithm='SAMME')
+scores_ada = cross_val_score(clf, data_ori[predictors], data_ori[target], cv=5)
+print (scores_ada)
+print (scores_ada.std())
+print (scores_ada.mean())
+
+# %%
+# 绘制对比图
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+plt.figure(figsize=(10,6))
+
+
+
+plt.plot([1,2,3,4,5],scores_ada,'r',label='AdaBoost')
+plt.plot([1,2,3,4,5],scores_rf,'b',label='RandomForest')
+plt.plot([1,2,3,4,5],scores_lr,'g',label='LogisticRegression')
+plt.plot([1,2,3,4,5],scores_dt,'y',label='DecisionTree')
+
+
+plt.legend(loc='upper right')
+plt.xlabel('Folds')
+plt.ylabel('Accuracy')
+plt.title('Accuracy of AdaBoost and RandomForest')
+plt.show()
+
+# %%
+# 对于四种分析方法的准确率、方差列成表格
+
+data = {'AdaBoost':[scores_ada.mean(),scores_ada.std()],'RandomForest':[scores_rf.mean(),scores_rf.std()],'LogisticRegression':[scores_lr.mean(),scores_lr.std()],'DecisionTree':[scores_dt.mean(),scores_dt.std()]}
+df = pd.DataFrame(data,index=['Accuracy','Variance'])
+df
+
+# %%
+# 评价各个维度数据的重要性
+
+clf = RandomForestClassifier(n_estimators=120, max_depth=3)
+
+clf.fit(data_ori[predictors], data_ori[target])
+
+importances = clf.feature_importances_ # 数值越大，说明该特征越重要
+# print(importances)
+
+# 重要性和特征名称对应
+indices = np.argsort(importances)[::-1]
+indices
+
+# 打印出最重要的10个特征所在的列名
+for f in range(10):
+    print("%2d) %-*s %f" % (f + 1, 30, predictors[indices[f]], importances[indices[f]]))
+
+
+
+# %%
+# 对于数据进行降维度处理
+from sklearn.decomposition import PCA
+
+# 降维度到2维
+pca = PCA(n_components=2)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+print("original shape:   ", data_ori[predictors].shape)
+
+# 比较降维前后的数据得到的准确率和之前的对比
+clf = RandomForestClassifier(n_estimators=120, max_depth=3)
+scores_rf = cross_val_score(clf, data_ori[predictors], data_ori[target], cv=5)
+
+print ('ori=',scores_rf)
+
+clf = RandomForestClassifier(n_estimators=120, max_depth=3)
+scores_rf_new = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+
+print ('2-dision=',scores_rf_new)
+
+# 降维度到3维
+pca = PCA(n_components=3)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_3 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('3-dision=',score_rf_new_3)
+
+# 降维度到4维
+pca = PCA(n_components=4)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_4 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('4-dision=',score_rf_new_4)
+
+# 降维度到5维
+pca = PCA(n_components=5)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_5 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('5-dision=',score_rf_new_5)
+
+# 降维度到6维
+pca = PCA(n_components=6)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_6 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('6-dision=',score_rf_new_6)
+
+# 降维度到7维
+pca = PCA(n_components=7)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_7 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('7-dision=',score_rf_new_7)
+
+# 降维度到8维
+pca = PCA(n_components=8)
+pca.fit(data_ori[predictors])
+X_pca = pca.transform(data_ori[predictors])
+
+score_rf_new_8 = cross_val_score(clf, X_pca, data_ori[target], cv=5)
+print ('8-dision=',score_rf_new_8)
+
+
+
