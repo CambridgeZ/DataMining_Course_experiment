@@ -276,17 +276,11 @@ def calcConf(freqSet, H, supportData, brl, minConf=0.7):
     return prunedH
 
 
+
 # test
 if __name__ == '__main__':
-    dataSet = loadDataSet()
+    dataSet = pd.read_csv('Transactions.csv')
+
     L, supportData = apriori(dataSet, minSupport=0.5)
-    print(L)
-    print(supportData)
     rules = generateRules(L, supportData, minConf=0.7)
     print(rules)
-
-# output
-
-
-
-    
