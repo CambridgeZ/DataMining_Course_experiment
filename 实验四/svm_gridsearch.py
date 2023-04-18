@@ -43,8 +43,7 @@ from sklearn.model_selection import cross_validate
 def load_data(filename):
     """根据数据格式，读取数据中的X和分类标签y
     """
-
-    return x_data, ylabel)
+    return x_data, ylabel
 
 def evaluate_classifier( real_label_list,predict_label_list):
     """
